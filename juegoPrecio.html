@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adivina el Precio - Akiba Zone</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/png" href="res/logo.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body class="page-quiz">
+
+  <!-- ================= NAVBAR ================= -->
+  <header class="navbar">
+    <a href="index.html" class="navbar__logo">
+      <img class="navbar__logo-img" src="res/logo.png" alt="Akiba Zone Logo">
+      <div class="navbar__logo-text">
+        <span class="navbar__logo-title">AKIBA<span>ZONE</span></span>
+        <span class="navbar__logo-sub">アキバゾーン · Bilbao</span>
+      </div>
+    </a>
+
+    <!-- Centered navigation buttons -->
+    <nav class="navbar__nav">
+      <a href="index.html">Inicio</a>
+      <a href="juegos.html" class="is-active">Juegos</a>
+      <a href="encuentranos.html">Encuéntranos</a>
+    </nav>
+
+    <div class="navbar__status">
+      <div class="navbar__badge">
+        <span class="navbar__badge-dot"></span>
+        <span>ABIERTOS· BILBAO</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="game">
+    <div class="game__inner">
+
+      <div class="quiz-terminal">
+
+        <!-- TERMINAL HUD HEADER -->
+        <div class="quiz-header">
+          <div class="quiz-badge-title">
+            <span>[SYS_ONLINE]</span> AKIBA_ZONE // ADIVINA_EL_PRECIO
+          </div>
+          <div class="quiz-hud-meta">
+            <span class="quiz-hud-counter" id="counter">Producto 01 / 10</span>
+            <span class="quiz-hud-score" id="avgLabel">Error medio: —</span>
+          </div>
+        </div>
+
+        <!-- PROGRESS BAR -->
+        <div class="quiz-progress-bar">
+          <div class="quiz-progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- ESCENARIO DE JUEGO (ACTIVO) -->
+        <section id="stage">
+
+          <div class="quiz-question-card quiz-question-card--frame">
+            <p class="quiz-question-num" id="frameBadge">// PRODUCTO 01 · AKIBA ZONE</p>
+            <div class="quiz-frame">
+              <img id="itemImg" src="" alt="Producto a adivinar">
+            </div>
+            <h1 class="quiz-question-title" id="itemName">Cargando producto...</h1>
+            <p class="quiz-question-hint">¿Cuánto crees que cuesta?</p>
+          </div>
+
+          <!-- INPUT DE PRECIO -->
+          <div class="quiz-price-input">
+            <input type="number" id="guessInput" step="0.01" min="0" placeholder="0,00" inputmode="decimal"
+              autocomplete="off" aria-label="Tu precio estimado en euros">
+            <span class="quiz-price-input__suffix">€</span>
+          </div>
+
+          <p class="quiz-feedback" id="inputError"></p>
+
+          <div class="quiz-actions">
+            <button class="btn btn--primary" id="submitBtn">Comprobar precio</button>
+          </div>
+
+          <!-- REVEAL -->
+          <div class="quiz-reveal" id="reveal" hidden>
+            <p class="quiz-reveal__label">Precio real</p>
+            <p class="quiz-reveal__price" id="revealPrice">0,00 €</p>
+            <p class="quiz-reveal__msg" id="revealMsg"></p>
+            <p class="quiz-reveal__diff" id="revealDiff"></p>
+          </div>
+
+          <div class="quiz-actions" id="nextActions" hidden>
+            <button class="btn btn--ghost" id="nextBtn">Siguiente producto →</button>
+          </div>
+
+        </section>
+
+        <!-- RESULTADO FINAL -->
+        <section class="quiz-result" id="result" hidden>
+          <p class="quiz-result__rank-tag" id="rankBadge">Calculando...</p>
+          <div class="quiz-result__score-wrap">
+            <p class="quiz-result__score" id="finalAvg">0,00 €</p>
+            <p class="quiz-result__of" id="finalOf">de error medio por producto</p>
+          </div>
+          <h2 class="quiz-result__title" id="finalTitle">Calculando...</h2>
+          <p class="quiz-result__msg" id="finalMsg">Calculando...</p>
+
+          <div class="quiz-result__actions">
+            <button class="btn btn--primary" id="replayBtn">Jugar otra vez</button>
+            <a class="btn btn--ghost" href="juegos.html">Volver a juegos</a>
+          </div>
+        </section>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    /* ============================================================
+       BANCO DE PRODUCTOS (ITEM POOL)
+       ------------------------------------------------------------
+       Añade tantos productos como quieras con este formato:
+
+       { name: "Nombre del producto", image: "res/productos/xxx.jpg", price: 00.00 },
+
+       El motor seleccionará 10 productos aleatorios de este pool
+       en cada partida.
+       ============================================================ */
+    const ITEM_POOL = [
+      { name: "Figura de Goku Super Saiyan 4", image: "res/productos/goku_ssj4.jpg", price: 89.95 },
+      { name: "Nendoroid de Hatsune Miku", image: "res/productos/nendoroid_miku.jpg", price: 54.90 },
+      { name: "Berserk — Tomo 1 (edición de lujo)", image: "res/productos/berserk_1.jpg", price: 19.95 },
+      { name: "Camiseta oficial Akiba Zone", image: "res/productos/camiseta_akiba.jpg", price: 24.99 },
+      { name: "Figura de Tanjiro Kamado (Kimetsu no Yaiba)", image: "res/productos/tanjiro.jpg", price: 74.90 },
+      { name: "Nendoroid de Gojo Satoru (Jujutsu Kaisen)", image: "res/productos/nendoroid_gojo.jpg", price: 62.50 },
+      { name: "Funko Pop! de Levi Ackerman", image: "res/productos/funko_levi.jpg", price: 17.95 },
+      { name: "Manga One Piece — Tomo 1", image: "res/productos/onepiece_1.jpg", price: 8.95 },
+      { name: "Manga Chainsaw Man — Tomo 1", image: "res/productos/csm_1.jpg", price: 9.95 },
+      { name: "Manga Jujutsu Kaisen — Tomo 0", image: "res/productos/jjk_0.jpg", price: 9.95 },
+      { name: "Poster A3 de Attack on Titan", image: "res/productos/poster_aot.jpg", price: 12.50 },
+      { name: "Taza Akiba Zone edición neón", image: "res/productos/taza_akiba.jpg", price: 14.99 },
+      { name: "Llavero metálico de Pikachu", image: "res/productos/llavero_pikachu.jpg", price: 7.50 },
+      { name: "Peluche de Totoro (Studio Ghibli)", image: "res/productos/peluche_totoro.jpg", price: 29.90 },
+      { name: "Peluche de Pikachu 30cm", image: "res/productos/peluche_pikachu.jpg", price: 24.95 },
+      { name: "Sudadera Akiba Zone negra", image: "res/productos/sudadera_akiba.jpg", price: 39.99 },
+      { name: "Gorra roja Akiba Zone", image: "res/productos/gorra_akiba.jpg", price: 19.99 },
+      { name: "Bolsas para manga (pack 100)", image: "res/productos/bolsas_manga.jpg", price: 6.50 },
+      { name: "Figura de Naruto Sage Mode", image: "res/productos/naruto_sage.jpg", price: 79.90 },
+      { name: "Figura de Luffy Gear 5", image: "res/productos/luffy_gear5.jpg", price: 84.90 },
+      { name: "Figura de Eren Titán de Ataque", image: "res/productos/eren_titan.jpg", price: 69.90 },
+      { name: "Nendoroid de Anya Forger (Spy x Family)", image: "res/productos/nendoroid_anya.jpg", price: 58.00 },
+      { name: "Funko Pop! de Itachi Uchiha", image: "res/productos/funko_itachi.jpg", price: 17.95 },
+      { name: "Funko Pop! de Vegeta Super Saiyan", image: "res/productos/funko_vegeta.jpg", price: 17.95 },
+      { name: "Gunpla HG Gundam RX-78-2", image: "res/productos/gunpla_rx78.jpg", price: 22.50 },
+      { name: "Gunpla MG Zaku II", image: "res/productos/gunpla_zaku.jpg", price: 49.90 },
+      { name: "Manga Death Note — Tomo 1", image: "res/productos/deathnote_1.jpg", price: 8.95 },
+      { name: "Artbook oficial de Kimetsu no Yaiba", image: "res/productos/artbook_kny.jpg", price: 27.00 },
+      { name: "Cojín Akiba Zone edición limitada", image: "res/productos/cojin_akiba.jpg", price: 21.99 },
+      { name: "Pack de pegatinas anime (20 uds.)", image: "res/productos/stickers_anime.jpg", price: 4.95 }
+    ];
+
+    /* ============================================================
+       CONFIGURACIÓN DEL JUEGO
+       ============================================================ */
+    const ITEMS_PER_GAME = 10;
+
+    /* ============================================================
+       UTILIDADES
+       ============================================================ */
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function eur(value) {
+      return value.toFixed(2).replace('.', ',') + ' €';
+    }
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    /* ============================================================
+       ESTADO
+       ============================================================ */
+    let sessionItems = [];
+    let index = 0;
+    let totalAbsError = 0;   // suma de desviaciones absolutas
+    let locked = false;
+
+    /* ============================================================
+       REFERENCIAS DOM
+       ============================================================ */
+    const dom = {
+      progressFill: document.getElementById('progressFill'),
+      counter: document.getElementById('counter'),
+      avgLabel: document.getElementById('avgLabel'),
+
+      stage: document.getElementById('stage'),
+      frameBadge: document.getElementById('frameBadge'),
+      itemImg: document.getElementById('itemImg'),
+      itemName: document.getElementById('itemName'),
+
+      guessInput: document.getElementById('guessInput'),
+      inputError: document.getElementById('inputError'),
+      submitBtn: document.getElementById('submitBtn'),
+
+      reveal: document.getElementById('reveal'),
+      revealPrice: document.getElementById('revealPrice'),
+      revealMsg: document.getElementById('revealMsg'),
+      revealDiff: document.getElementById('revealDiff'),
+
+      nextActions: document.getElementById('nextActions'),
+      nextBtn: document.getElementById('nextBtn'),
+
+      result: document.getElementById('result'),
+      rankBadge: document.getElementById('rankBadge'),
+      finalAvg: document.getElementById('finalAvg'),
+      finalOf: document.getElementById('finalOf'),
+      finalTitle: document.getElementById('finalTitle'),
+      finalMsg: document.getElementById('finalMsg'),
+      replayBtn: document.getElementById('replayBtn')
+    };
+
+    /* ============================================================
+       INICIO DE SESIÓN
+       ============================================================ */
+    function startGameSession() {
+      // Selecciona 10 productos aleatorios del pool
+      const shuffledPool = shuffle(ITEM_POOL);
+      sessionItems = shuffledPool.slice(0, Math.min(ITEMS_PER_GAME, shuffledPool.length));
+
+      index = 0;
+      totalAbsError = 0;
+      locked = false;
+
+      dom.result.hidden = true;
+      dom.stage.hidden = false;
+      dom.progressFill.style.width = '0%';
+
+      renderItem();
+    }
+
+    /* ============================================================
+       HUD
+       ============================================================ */
+    function updateHud() {
+      const total = sessionItems.length;
+      const displayIndex = Math.min(index + 1, total);
+      dom.counter.textContent = `Producto ${pad(displayIndex)} / ${total}`;
+
+      const answered = index; // productos ya resueltos
+      dom.progressFill.style.width = ((answered / total) * 100) + '%';
+
+      if (answered > 0) {
+        dom.avgLabel.textContent = `Error medio: ${eur(totalAbsError / answered)}`;
+      } else {
+        dom.avgLabel.textContent = 'Error medio: —';
+      }
+    }
+
+    /* ============================================================
+       RENDER DE PRODUCTO
+       ============================================================ */
+    function renderItem() {
+      locked = false;
+
+      const item = sessionItems[index];
+      updateHud();
+
+      dom.frameBadge.textContent = `// PRODUCTO ${pad(index + 1)} · AKIBA ZONE`;
+      dom.itemImg.src = item.image;
+      dom.itemImg.alt = item.name;
+      dom.itemName.textContent = item.name;
+
+      // Reset del formulario
+      dom.guessInput.value = '';
+      dom.guessInput.disabled = false;
+      dom.guessInput.focus();
+
+      dom.inputError.textContent = '';
+      dom.inputError.className = 'quiz-feedback';
+      dom.submitBtn.disabled = false;
+
+      dom.reveal.hidden = true;
+      dom.reveal.className = 'quiz-reveal';
+      dom.revealMsg.className = 'quiz-reveal__msg';
+
+      dom.nextActions.hidden = true;
+    }
+
+    /* ============================================================
+       COMPROBAR PRECIO
+       ============================================================ */
+    function checkPrice() {
+      if (locked) return;
+
+      const raw = dom.guessInput.value.trim();
+
+      // Validación
+      if (raw === '') {
+        dom.inputError.textContent = '[ERROR] Escribe un precio antes de comprobar.';
+        dom.inputError.className = 'quiz-feedback ko';
+        shakeInput();
+        return;
+      }
+
+      const guess = Number(raw.replace(',', '.'));
+
+      if (!Number.isFinite(guess) || guess < 0) {
+        dom.inputError.textContent = '[ERROR] Introduce un número válido (ej: 49,95).';
+        dom.inputError.className = 'quiz-feedback ko';
+        shakeInput();
+        return;
+      }
+
+      locked = true;
+      dom.inputError.textContent = '';
+      dom.inputError.className = 'quiz-feedback';
+      dom.guessInput.disabled = true;
+      dom.submitBtn.disabled = true;
+
+      const item = sessionItems[index];
+      const real = item.price;
+      const diff = guess - real;               // positivo = se pasó
+      const absDiff = Math.abs(diff);
+      const pct = absDiff / real;
+
+      totalAbsError += absDiff;
+
+      // Mensaje según precisión
+      let msg, cls;
+      if (absDiff < 0.01) {
+        msg = '¡Clavado!';
+        cls = 'ok';
+      } else if (pct <= 0.05) {
+        msg = '¡Extremadamente cerca!';
+        cls = 'ok';
+      } else if (pct <= 0.15) {
+        msg = '¡Muy cerca!';
+        cls = 'ok';
+      } else if (pct <= 0.35) {
+        msg = 'Más o menos';
+        cls = 'mid';
+      } else if (pct <= 0.75) {
+        msg = 'No muy cerca...';
+        cls = 'ko';
+      } else {
+        msg = 'Ni de lejos.';
+        cls = 'ko';
+      }
+
+      // Dirección del error
+      let diffText;
+      if (absDiff < 0.01) {
+        diffText = 'Has dado el precio exacto.';
+      } else if (diff > 0) {
+        diffText = `Te has pasado por ${eur(absDiff)}.`;
+      } else {
+        diffText = `Te has quedado corto por ${eur(absDiff)}.`;
+      }
+
+      // Mostrar revelado
+      dom.revealPrice.textContent = eur(real);
+      dom.revealMsg.textContent = msg;
+      dom.revealMsg.className = 'quiz-reveal__msg ' + cls;
+      dom.reveal.hidden = false;
+
+      dom.nextActions.hidden = false;
+      dom.nextBtn.textContent = (index + 1 >= sessionItems.length)
+        ? 'Ver resultado final →'
+        : 'Siguiente producto →';
+
+      updateHud();
+    }
+
+    function shakeInput() {
+      dom.guessInput.animate(
+        [
+          { transform: 'translateX(0)' },
+          { transform: 'translateX(-8px)' },
+          { transform: 'translateX(8px)' },
+          { transform: 'translateX(-5px)' },
+          { transform: 'translateX(0)' }
+        ],
+        { duration: 320, easing: 'ease-in-out' }
+      );
+    }
+
+    /* ============================================================
+       SIGUIENTE
+       ============================================================ */
+    function nextItem() {
+      index++;
+      if (index >= sessionItems.length) {
+        showFinalResult();
+      } else {
+        renderItem();
+      }
+    }
+
+    /* ============================================================
+       RESULTADO FINAL
+       ============================================================ */
+    function showFinalResult() {
+      const total = sessionItems.length;
+      const avg = totalAbsError / total;
+
+      dom.progressFill.style.width = '100%';
+      dom.counter.textContent = 'COMPLETADO';
+      dom.avgLabel.textContent = `Error medio: ${eur(avg)}`;
+
+      dom.stage.hidden = true;
+      dom.result.hidden = false;
+
+      dom.finalAvg.textContent = eur(avg);
+      dom.finalOf.textContent = `de error medio por producto`;
+
+      // Valoración global según error medio relativo
+      const avgPrice = sessionItems.reduce((s, i) => s + i.price, 0) / total;
+      const avgRelative = avg / avgPrice;
+
+      let rank, title, msg;
+      if (avgRelative <= 0.05) {
+        rank = '// COMPLETADO · RANGO S';
+        title = '¡OJO DE COLECCIONISTA!';
+        msg = 'Tienes el precio de cada figura grabado a fuego. Impresionante.';
+      } else if (avgRelative <= 0.15) {
+        rank = '// COMPLETADO · RANGO A';
+        title = 'Muy buen instinto';
+        msg = 'Se nota que frecuentas tiendas frikis. ¡Deberías pasarte a vernos!.';
+      } else if (avgRelative <= 0.30) {
+        rank = '// COMPLETADO · RANGO B';
+        title = 'Aprobado';
+        msg = 'Vas bien encaminado, pero el margen de error aún es visible.';
+      } else if (avgRelative <= 0.60) {
+        rank = '// COMPLETADO · RANGO C';
+        title = 'Hay que afinar';
+        msg = 'Tus estimaciones se van bastante. Toca comparar precios.';
+      } else {
+        rank = '// COMPLETADO · RANGO D';
+        title = 'Cero idea de precios';
+        msg = 'Al menos ahora ya sabes lo que cuestan. Progreso.';
+      }
+
+      dom.rankBadge.textContent = rank;
+      dom.finalTitle.textContent = title;
+      dom.finalMsg.textContent = msg;
+    }
+
+    /* ============================================================
+       EVENTOS
+       ============================================================ */
+    dom.submitBtn.addEventListener('click', checkPrice);
+    dom.nextBtn.addEventListener('click', nextItem);
+    dom.replayBtn.addEventListener('click', startGameSession);
+
+    // Enter para enviar
+    dom.guessInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        checkPrice();
+      }
+    });
+
+    // Limpia el error al escribir
+    dom.guessInput.addEventListener('input', () => {
+      if (dom.inputError.textContent) {
+        dom.inputError.textContent = '';
+        dom.inputError.className = 'quiz-feedback';
+      }
+    });
+
+    /* ============================================================
+       ARRANQUE AUTOMÁTICO
+       ============================================================ */
+    startGameSession();
+  </script>
+
+</body>
+
+</html>

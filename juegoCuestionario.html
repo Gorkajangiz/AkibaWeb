@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Trivia - Akiba Zone</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="res/logo.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body class="page-quiz">
+
+    <!-- ================= NAVBAR ================= -->
+    <header class="navbar">
+        <a href="index.html" class="navbar__logo">
+            <img class="navbar__logo-img" src="res/logo.png" alt="Akiba Zone Logo">
+            <div class="navbar__logo-text">
+                <span class="navbar__logo-title">AKIBA<span>ZONE</span></span>
+                <span class="navbar__logo-sub">アキバゾーン · Bilbao</span>
+            </div>
+        </a>
+
+        <!-- Centered navigation buttons -->
+        <nav class="navbar__nav">
+            <a href="index.html">Inicio</a>
+            <a href="juegos.html" class="is-active">Juegos</a>
+            <a href="encuentranos.html">Encuéntranos</a>
+        </nav>
+
+        <div class="navbar__status">
+            <div class="navbar__badge">
+                <span class="navbar__badge-dot"></span>
+                <span>ABIERTOS· BILBAO</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="game">
+        <div class="game__inner">
+
+            <div class="quiz-terminal">
+
+                <!-- TERMINAL HUD HEADER -->
+                <div class="quiz-header">
+                    <div class="quiz-badge-title">
+                        <span>[SYS_ONLINE]</span> AKIBA_ZONE // TRIVIA
+                    </div>
+                    <div class="quiz-hud-meta">
+                        <span class="quiz-hud-counter" id="counter">Pregunta 01 / 10</span>
+                        <span class="quiz-hud-score" id="score">Aciertos: 0</span>
+                    </div>
+                </div>
+
+                <!-- PROGRESS BAR -->
+                <div class="quiz-progress-bar">
+                    <div class="quiz-progress-fill" id="progressFill"></div>
+                </div>
+
+                <!-- ESCENARIO DE JUEGO (ACTIVO) -->
+                <section id="stage">
+                    <div class="quiz-question-card">
+                        <p class="quiz-question-num" id="questionNum">// PREGUNTA NUMERO 01</p>
+                        <h1 class="quiz-question-title" id="questionText">Cargando pregunta...</h1>
+                    </div>
+
+                    <!-- CYBER OPTION MODULES (Replaced Kahoot tiles) -->
+                    <div class="quiz-answers-grid" id="answers"></div>
+
+                    <p class="quiz-feedback" id="feedback"></p>
+                </section>
+
+                <!-- RESULTADO FINAL -->
+                <section class="quiz-result" id="result" hidden>
+                    <p class="quiz-result__rank-tag" id="rankBadge">Calculando...</p>
+                    <div class="quiz-result__score-wrap">
+                        <p class="quiz-result__score" id="finalScore">0</p>
+                        <p class="quiz-result__of" id="finalOf">de 10 aciertos</p>
+                    </div>
+                    <h2 class="quiz-result__title" id="finalTitle">Calculando...</h2>
+                    <p class="quiz-result__msg" id="finalMsg">
+                        Calculando...
+                    </p>
+
+                    <div class="quiz-result__actions">
+                        <button class="btn btn--primary" id="replayBtn">Jugar otra vez</button>
+                        <a class="btn btn--ghost" href="juegos.html">Volver a juegos</a>
+                    </div>
+                </section>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ================= JAVASCRIPT DEL QUIZ CON BANCO DE PREGUNTAS ================= -->
+    <script>
+        /* ============================================================
+           BANCO DE PREGUNTAS (QUESTION POOL)
+           ------------------------------------------------------------
+           Para añadir nuevas preguntas fácilmente, simplemente copia y
+           pega un nuevo bloque en el array QUESTION_POOL con este formato:
+
+           {
+             question: "¿Tu pregunta aquí?",
+             answers: [
+               { text: "Respuesta correcta", correct: true },
+               { text: "Respuesta incorrecta 1", correct: false },
+               { text: "Respuesta incorrecta 2", correct: false },
+               { text: "Respuesta incorrecta 3", correct: false }
+             ]
+           },
+
+           El motor seleccionará automáticamente 10 preguntas aleatorias
+           de este pool en cada partida y barajará las opciones.
+           ============================================================ */
+        const QUESTION_POOL = [
+            {
+                question: "¿En qué año se estrenó la primera temporada del anime de Sword Art Online?",
+                answers: [
+                    { text: "2012", correct: true },
+                    { text: "2009", correct: false },
+                    { text: "2015", correct: false },
+                    { text: "2007", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama la aldea ninja de la que es originario Naruto Uzumaki?",
+                answers: [
+                    { text: "Aldea Oculta de la Hoja (Konoha)", correct: true },
+                    { text: "Aldea Oculta de la Arena (Suna)", correct: false },
+                    { text: "Aldea Oculta de la Niebla (Kiri)", correct: false },
+                    { text: "Aldea Oculta de las Nubes (Kumo)", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué estudio de animación produjo la película 'Your Name' (Kimi no Na wa)?",
+                answers: [
+                    { text: "CoMix Wave Films", correct: true },
+                    { text: "Studio Ghibli", correct: false },
+                    { text: "Kyoto Animation", correct: false },
+                    { text: "MAPPA", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué objeto sobrenatural da título y poder a la obra 'Death Note'?",
+                answers: [
+                    { text: "Un cuaderno de un Shinigami", correct: true },
+                    { text: "Una máscara ceremonial", correct: false },
+                    { text: "Un reloj de arena místico", correct: false },
+                    { text: "Una pluma de tinta negra", correct: false }
+                ]
+            },
+            {
+                question: "¿Cuál es el nombre de la unidad EVA pilotada por Asuka Langley en Evangelion?",
+                answers: [
+                    { text: "Evangelion Unidad 02", correct: true },
+                    { text: "Evangelion Unidad 01", correct: false },
+                    { text: "Evangelion Unidad 00", correct: false },
+                    { text: "Evangelion Unidad 06", correct: false }
+                ]
+            },
+            {
+                question: "¿Cuál es el objetivo final de Monkey D. Luffy en 'One Piece'?",
+                answers: [
+                    { text: "Encontrar el One Piece y ser el Rey de los Piratas", correct: true },
+                    { text: "Vencer a la Marina y gobernar el mundo", correct: false },
+                    { text: "Recolectar las 7 gemas del océano", correct: false },
+                    { text: "Vengar a su hermano Portgas D. Ace", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué técnica especial aprendió Tanjiro Kamado de su padre en 'Kimetsu no Yaiba'?",
+                answers: [
+                    { text: "Danza del Dios del Fuego (Hinokami Kagura)", correct: true },
+                    { text: "Respiración del Rayo Primera Postura", correct: false },
+                    { text: "Respiración del Sol Poniente", correct: false },
+                    { text: "Danza de la Luna Sangrienta", correct: false }
+                ]
+            },
+            {
+                question: "¿Cuál es la fruta del diablo que consumió Portgas D. Ace en One Piece?",
+                answers: [
+                    { text: "Mera Mera no Mi", correct: true },
+                    { text: "Gomu Gomu no Mi", correct: false },
+                    { text: "Magu Magu no Mi", correct: false },
+                    { text: "Ope Ope no Mi", correct: false }
+                ]
+            },
+            {
+                question: "¿Quién es el autor creador del célebre manga 'Berserk'?",
+                answers: [
+                    { text: "Kentaro Miura", correct: true },
+                    { text: "Takehiko Inoue", correct: false },
+                    { text: "Naoki Urasawa", correct: false },
+                    { text: "Yoshihiro Togashi", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama el barrio de Tokio famoso mundialmente como la meca de la cultura otaku y electrónica?",
+                answers: [
+                    { text: "Akihabara", correct: true },
+                    { text: "Shinjuku", correct: false },
+                    { text: "Roppongi", correct: false },
+                    { text: "Ikebukuro", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué tipo de artefactos ensamblables representan los modelos 'Gunpla'?",
+                answers: [
+                    { text: "Mobile Suits y mechas de Gundam", correct: true },
+                    { text: "Katanas metálicas de samuráis", correct: false },
+                    { text: "Circuitos de consolas retro", correct: false },
+                    { text: "Peluches mecánicos interactivos", correct: false }
+                ]
+            },
+            {
+                question: "¿En 'Fullmetal Alchemist', cuál es la primera ley de la alquimia?",
+                answers: [
+                    { text: "Ley del Intercambio Equivalente", correct: true },
+                    { text: "Ley de la Conservación Vital", correct: false },
+                    { text: "Ley del Alma y la Piedra", correct: false },
+                    { text: "Ley de la Transmutación Inmortal", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama la cazadora tradicional japonesa bordada que data de la posguerra y es icono de moda anime?",
+                answers: [
+                    { text: "Sukajan", correct: true },
+                    { text: "Haori", correct: false },
+                    { text: "Yukata", correct: false },
+                    { text: "Hakama", correct: false }
+                ]
+            },
+            {
+                question: "¿Quién es el capitán del Escuadrón de Operaciones Especiales en 'Attack on Titan' apodado el soldado más fuerte de la humanidad?",
+                answers: [
+                    { text: "Levi Ackerman", correct: true },
+                    { text: "Erwin Smith", correct: false },
+                    { text: "Jean Kirstein", correct: false },
+                    { text: "Reiner Braun", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué instrumento musical toca Mio Akiyama en el anime 'K-On!'?",
+                answers: [
+                    { text: "Bajo eléctrico", correct: true },
+                    { text: "Guitarra solista", correct: false },
+                    { text: "Teclado sintetizador", correct: false },
+                    { text: "Batería", correct: false }
+                ]
+            },
+            {
+                question: "¿En 'Jujutsu Kaisen', cuál es la Expansión de Dominio de Satoru Gojo?",
+                answers: [
+                    { text: "Vacío Inconmensurable (Muryōkūsho)", correct: true },
+                    { text: "Santuario Malévolo", correct: false },
+                    { text: "Jardín de Sombras Quiméricas", correct: false },
+                    { text: "Ataúd de la Montaña de Hierro", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué personaje es el fiel compañero pokémon de Ash Ketchum desde el episodio 1?",
+                answers: [
+                    { text: "Pikachu", correct: true },
+                    { text: "Charizard", correct: false },
+                    { text: "Bulbasaur", correct: false },
+                    { text: "Lucario", correct: false }
+                ]
+            },
+            {
+                question: "¿En qué legendaria película de anime de 1988 aparece la mítica moto roja de Kaneda en Neo-Tokio?",
+                answers: [
+                    { text: "Akira", correct: true },
+                    { text: "Ghost in the Shell", correct: false },
+                    { text: "Cowboy Bebop: Knockin' on Heaven's Door", correct: false },
+                    { text: "Neon Genesis Evangelion", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama la nave espacial de los cazarrecompensas en 'Cowboy Bebop'?",
+                answers: [
+                    { text: "Bebop", correct: true },
+                    { text: "Swordfish II", correct: false },
+                    { text: "Red Tail", correct: false },
+                    { text: "Hammer Head", correct: false }
+                ]
+            },
+            {
+                question: "¿En 'Chainsaw Man', cómo se llama el demonio motosierra con forma de perro que salva a Denji?",
+                answers: [
+                    { text: "Pochita", correct: true },
+                    { text: "Kon", correct: false },
+                    { text: "Beam", correct: false },
+                    { text: "Power", correct: false }
+                ]
+            },
+            {
+                question: "¿Cuál es el videojuego que atrapa a 10.000 jugadores en la fortaleza flotante de Aincrad?",
+                answers: [
+                    { text: "Sword Art Online", correct: true },
+                    { text: "Gun Gale Online", correct: false },
+                    { text: "Alfheim Online", correct: false },
+                    { text: "Elder Tale", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué fabricante japonés es mundialmente conocido por la línea de figuras articuladas chibi 'Nendoroid'?",
+                answers: [
+                    { text: "Good Smile Company", correct: true },
+                    { text: "Kotobukiya", correct: false },
+                    { text: "MegaHouse", correct: false },
+                    { text: "Alter", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama el capitán de los Piratas del Sombrero de Paja en One Piece?",
+                answers: [
+                    { text: "Monkey D. Luffy", correct: true },
+                    { text: "Roronoa Zoro", correct: false },
+                    { text: "Sanji", correct: false },
+                    { text: "Nami", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama el protagonista principal de Dragon Ball Z?",
+                answers: [
+                    { text: "Son Goku", correct: true },
+                    { text: "Vegeta", correct: false },
+                    { text: "Piccolo", correct: false },
+                    { text: "Gohan", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama el titán que posee Eren Yeager en Attack on Titan?",
+                answers: [
+                    { text: "Titán de Ataque", correct: true },
+                    { text: "Titán Colosal", correct: false },
+                    { text: "Titán Acorazado", correct: false },
+                    { text: "Titán Hembra", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué objeto utiliza Light Yagami para matar a sus víctimas en Death Note?",
+                answers: [
+                    { text: "Un cuaderno", correct: true },
+                    { text: "Una pluma", correct: false },
+                    { text: "Una espada", correct: false },
+                    { text: "Un anillo", correct: false }
+                ]
+            },
+            {
+                question: "¿Cuál es el nombre del protagonista de My Hero Academia?",
+                answers: [
+                    { text: "Izuku Midoriya", correct: true },
+                    { text: "Katsuki Bakugo", correct: false },
+                    { text: "Shoto Todoroki", correct: false },
+                    { text: "Tenya Iida", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué buscan los hermanos Edward y Alphonse Elric en Fullmetal Alchemist: Brotherhood?",
+                answers: [
+                    { text: "La Piedra Filosofal", correct: true },
+                    { text: "El Santo Grial", correct: false },
+                    { text: "La Espada Sagrada", correct: false },
+                    { text: "El Elixir de la Vida", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué es Ken Kaneki al inicio de la historia de Tokyo Ghoul?",
+                answers: [
+                    { text: "Un humano", correct: true },
+                    { text: "Un ghoul", correct: false },
+                    { text: "Un híbrido", correct: false },
+                    { text: "Un investigador", correct: false }
+                ]
+            },
+            {
+                question: "¿Cuál es el nombre del protagonista de Demon Slayer?",
+                answers: [
+                    { text: "Tanjiro Kamado", correct: true },
+                    { text: "Zenitsu Agatsuma", correct: false },
+                    { text: "Inosuke Hashibira", correct: false },
+                    { text: "Giyu Tomioka", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué consume Yuji Itadori al inicio de Jujutsu Kaisen?",
+                answers: [
+                    { text: "Un dedo de Sukuna", correct: true },
+                    { text: "Una poción", correct: false },
+                    { text: "Una fruta", correct: false },
+                    { text: "Una pastilla", correct: false }
+                ]
+            },
+            {
+                question: "¿A quién busca Gon Freecss en Hunter x Hunter?",
+                answers: [
+                    { text: "A su padre", correct: true },
+                    { text: "A su madre", correct: false },
+                    { text: "A su hermano", correct: false },
+                    { text: "A su maestro", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué poder obtiene Ichigo Kurosaki al conocer a Rukia en Bleach?",
+                answers: [
+                    { text: "Poderes de Shinigami", correct: true },
+                    { text: "Poderes de Quincy", correct: false },
+                    { text: "Poderes de Hollow", correct: false },
+                    { text: "Poderes de Fullbring", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama el protagonista de One Punch Man?",
+                answers: [
+                    { text: "Saitama", correct: true },
+                    { text: "Genos", correct: false },
+                    { text: "King", correct: false },
+                    { text: "Mumen Rider", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama el gremio de magos al que pertenece Lucy en Fairy Tail?",
+                answers: [
+                    { text: "Fairy Tail", correct: true },
+                    { text: "Blue Pegasus", correct: false },
+                    { text: "Lamia Scale", correct: false },
+                    { text: "Sabertooth", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama la protagonista de Sailor Moon?",
+                answers: [
+                    { text: "Usagi Tsukino", correct: true },
+                    { text: "Ami Mizuno", correct: false },
+                    { text: "Rei Hino", correct: false },
+                    { text: "Makoto Kino", correct: false }
+                ]
+            },
+            {
+                question: "¿Cuál es el Pokémon inicial de Ash en la región de Kanto?",
+                answers: [
+                    { text: "Pikachu", correct: true },
+                    { text: "Charmander", correct: false },
+                    { text: "Bulbasaur", correct: false },
+                    { text: "Squirtle", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama el protagonista de Neon Genesis Evangelion?",
+                answers: [
+                    { text: "Shinji Ikari", correct: true },
+                    { text: "Asuka Langley", correct: false },
+                    { text: "Rei Ayanami", correct: false },
+                    { text: "Kaworu Nagisa", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama el protagonista principal de Cowboy Bebop?",
+                answers: [
+                    { text: "Spike Spiegel", correct: true },
+                    { text: "Jet Black", correct: false },
+                    { text: "Faye Valentine", correct: false },
+                    { text: "Edward Wong", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué puede enviar Okabe Rintaro al pasado en Steins;Gate?",
+                answers: [
+                    { text: "Mensajes de texto", correct: true },
+                    { text: "Personas", correct: false },
+                    { text: "Objetos grandes", correct: false },
+                    { text: "Recuerdos", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué habilidad tiene Subaru Natsuki al morir en Re:Zero?",
+                answers: [
+                    { text: "Regresar a la muerte", correct: true },
+                    { text: "Revivir a otros", correct: false },
+                    { text: "Viajar en el tiempo", correct: false },
+                    { text: "Curarse", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama el protagonista de Konosuba?",
+                answers: [
+                    { text: "Kazuma Satou", correct: true },
+                    { text: "Aqua", correct: false },
+                    { text: "Megumin", correct: false },
+                    { text: "Darkness", correct: false }
+                ]
+            },
+            {
+                question: "¿Cómo se llama el protagonista en el juego Yggdrasil en Overlord?",
+                answers: [
+                    { text: "Momonga", correct: true },
+                    { text: "Touch Me", correct: false },
+                    { text: "Ulbert", correct: false },
+                    { text: "Peroroncino", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué deporte practica el protagonista Shoyo Hinata en Haikyuu!!?",
+                answers: [
+                    { text: "Voleibol", correct: true },
+                    { text: "Baloncesto", correct: false },
+                    { text: "Fútbol", correct: false },
+                    { text: "Tenis", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué deporte practican los personajes de Kuroko no Basket?",
+                answers: [
+                    { text: "Baloncesto", correct: true },
+                    { text: "Voleibol", correct: false },
+                    { text: "Fútbol", correct: false },
+                    { text: "Béisbol", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué tipo de criatura es Inuyasha?",
+                answers: [
+                    { text: "Un medio youkai", correct: true },
+                    { text: "Un humano", correct: false },
+                    { text: "Un demonio completo", correct: false },
+                    { text: "Un ángel", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué poder tiene Anya Forger en Spy x Family?",
+                answers: [
+                    { text: "Leer mentes", correct: true },
+                    { text: "Telequinesis", correct: false },
+                    { text: "Invisibilidad", correct: false },
+                    { text: "Superfuerza", correct: false }
+                ]
+            },
+            {
+                question: "¿Quién es el protagonista de Black Clover?",
+                answers: [
+                    { text: "Asta", correct: true },
+                    { text: "Yuno", correct: false },
+                    { text: "Noelle Silva", correct: false },
+                    { text: "Yami Sukehiro", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué quiere lograr Senku Ishigami en Dr. Stone?",
+                answers: [
+                    { text: "Revivir la civilización con ciencia", correct: true },
+                    { text: "Convertirse en el más fuerte", correct: false },
+                    { text: "Encontrar un tesoro", correct: false },
+                    { text: "Dominar el mundo", correct: false }
+                ]
+            },
+            {
+                question: "¿Quién es el protagonista de Gintama?",
+                answers: [
+                    { text: "Gintoki Sakata", correct: true },
+                    { text: "Shinpachi Shimura", correct: false },
+                    { text: "Kagura", correct: false },
+                    { text: "Toshiro Hijikata", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué es un 'seiyuu' en Japón?",
+                answers: [
+                    { text: "Un actor de voz", correct: true },
+                    { text: "Un dibujante de manga", correct: false },
+                    { text: "Un director de anime", correct: false },
+                    { text: "Un productor", correct: false }
+                ]
+            },
+            {
+                question: "¿Qué significa 'otaku' en Japón?",
+                answers: [
+                    { text: "Fanático obsesivo de algo", correct: true },
+                    { text: "Artista de manga", correct: false },
+                    { text: "Maestro de ceremonias", correct: false },
+                    { text: "Estudiante de anime", correct: false }
+                ]
+            }
+        ];
+
+        /* ============================================================
+           CONFIGURACIÓN DEL JUEGO
+           ============================================================ */
+        const QUESTIONS_PER_GAME = 10;
+        const LABELS = ['01', '02', '03', '04'];
+
+        let sessionQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let isLocked = false;
+
+        /* Referencias del DOM */
+        const dom = {
+            counter: document.getElementById('counter'),
+            score: document.getElementById('score'),
+            progressFill: document.getElementById('progressFill'),
+            stage: document.getElementById('stage'),
+            questionNum: document.getElementById('questionNum'),
+            questionText: document.getElementById('questionText'),
+            answers: document.getElementById('answers'),
+            feedback: document.getElementById('feedback'),
+            result: document.getElementById('result'),
+            rankBadge: document.getElementById('rankBadge'),
+            finalScore: document.getElementById('finalScore'),
+            finalOf: document.getElementById('finalOf'),
+            finalTitle: document.getElementById('finalTitle'),
+            finalMsg: document.getElementById('finalMsg'),
+            replayBtn: document.getElementById('replayBtn')
+        };
+
+        /* Utilidad: Mezclar array (Fisher-Yates) */
+        function shuffle(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        /* Iniciar nueva sesión con 10 preguntas aleatorias */
+        function startQuizSession() {
+            // Selecciona 10 preguntas al azar del pool
+            const shuffledPool = shuffle(QUESTION_POOL);
+            sessionQuestions = shuffledPool.slice(0, Math.min(QUESTIONS_PER_GAME, shuffledPool.length));
+
+            currentIndex = 0;
+            score = 0;
+            isLocked = false;
+
+            dom.result.hidden = true;
+            dom.stage.hidden = false;
+            dom.progressFill.style.width = '0%';
+
+            renderQuestion();
+        }
+
+        /* Actualizar HUD */
+        function updateHud(answered = false) {
+            const total = sessionQuestions.length;
+            const displayIndex = Math.min(currentIndex + 1, total);
+            const padIndex = String(displayIndex).padStart(2, '0');
+            dom.counter.textContent = `Pregunta ${padIndex} / ${total}`;
+            dom.score.textContent = `Aciertos: ${score}`;
+
+            const progress = ((currentIndex + (answered ? 1 : 0)) / total) * 100;
+            dom.progressFill.style.width = progress + '%';
+        }
+
+        /* Renderizar pregunta actual */
+        function renderQuestion() {
+            isLocked = false;
+            const total = sessionQuestions.length;
+            const q = sessionQuestions[currentIndex];
+
+            updateHud(false);
+
+            dom.questionNum.textContent = `// PREGUNTA NUMERO ${String(currentIndex + 1).padStart(2, '0')} · AKIBA ZONE`;
+            dom.questionText.textContent = q.question;
+
+            dom.feedback.textContent = '';
+            dom.feedback.className = 'quiz-feedback';
+
+            dom.answers.className = 'quiz-answers-grid';
+            dom.answers.innerHTML = '';
+
+            // Barajar las 4 opciones de la pregunta
+            const shuffledAnswers = shuffle(q.answers);
+
+            shuffledAnswers.forEach((ans, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'quiz-opt';
+                btn.innerHTML = `
+                    <span class="quiz-opt__badge">${LABELS[idx] || (idx + 1)}</span>
+                    <span class="quiz-opt__text">${escapeHtml(ans.text)}</span>
+                `;
+
+                btn.addEventListener('click', () => handleSelectAnswer(btn, ans, shuffledAnswers));
+                dom.answers.appendChild(btn);
+            });
+        }
+
+        /* Selección de respuesta */
+        function handleSelectAnswer(selectedBtn, answer, allAnswers) {
+            if (isLocked) return;
+            isLocked = true;
+
+            dom.answers.classList.add('is-locked');
+            const buttons = Array.from(dom.answers.children);
+
+            if (answer.correct) {
+                selectedBtn.classList.add('is-correct');
+                score++;
+                dom.feedback.textContent = '[RESPUESTA CORRECTA]';
+                dom.feedback.className = 'quiz-feedback ok';
+            } else {
+                selectedBtn.classList.add('is-wrong');
+                // Revelar la opción correcta en verde
+                buttons.forEach((b, i) => {
+                    if (allAnswers[i].correct) {
+                        b.classList.add('is-correct');
+                    }
+                });
+                const rightAnswerText = allAnswers.find(a => a.correct).text;
+                dom.feedback.textContent = `[RESPUESTA INCORRECTA // Correcta: ${rightAnswerText}]`;
+                dom.feedback.className = 'quiz-feedback ko';
+            }
+
+            updateHud(true);
+
+            // Transición automática a la siguiente pregunta
+            setTimeout(() => {
+                currentIndex++;
+                if (currentIndex >= sessionQuestions.length) {
+                    showFinalResult();
+                } else {
+                    renderQuestion();
+                }
+            }, 1600);
+        }
+
+        /* Pantalla de resultados */
+        function showFinalResult() {
+            dom.progressFill.style.width = '100%';
+            dom.counter.textContent = 'COMPLETADO';
+            dom.score.textContent = `Aciertos: ${score}`;
+
+            dom.stage.hidden = true;
+            dom.result.hidden = false;
+
+            dom.finalScore.textContent = score;
+            dom.finalOf.textContent = `de ${sessionQuestions.length} aciertos`;
+
+            const ratio = score / sessionQuestions.length;
+            let rank, title, msg;
+
+            if (ratio === 1) {
+                rank = '// COMPLETADO · RANGO S';
+                title = '¡Eres un verdadero otaku!';
+                msg = '10 de 10, ¡perfecto! Llevas años en esto o tienes muy buena memoria, ¡has pasado la prueba!';
+            } else if (ratio >= 0.8) {
+                rank = '// COMPLETADO · RANGO A';
+                title = '¡Estas muy cerca de la gloria!';
+                msg = '¡Casi perfecto! Pueden ser los nervios, las preguntas trampa o ese anime en tu lista de pendientes, ¡sigue intentándolo!';
+            } else if (ratio >= 0.6) {
+                rank = '// COMPLETADO · RANGO B';
+                title = '¡Muy buen trabajo!';
+                msg = 'Has caído en algunas de las trampas, pero has superado muchas preguntas con éxito, ¡Vas por buen camino!';
+            } else if (ratio >= 0.4) {
+                rank = '// COMPLETADO · RANGO C';
+                title = 'Aún te queda por aprender';
+                msg = 'Eres más bien un principiante, aunque sabes más de lo que parece. Sigue intentandolo y alcanzarás la gloria.';
+            } else {
+                rank = '// COMPLETADO · RANGO D';
+                title = 'Otaku principiante';
+                msg = 'Totalmente nuevo al mundillo, pero no te preocupes, ¡faltan muchas aventuras por ver!';
+            }
+
+            dom.rankBadge.textContent = rank;
+            dom.finalTitle.textContent = title;
+            dom.finalMsg.textContent = msg;
+        }
+
+        /* Eventos */
+        dom.replayBtn.addEventListener('click', startQuizSession);
+
+        /* Arranque automático */
+        startQuizSession();
+    </script>
+</body>
+
+</html>

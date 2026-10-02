@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adivina el Anime - Akiba Zone</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/png" href="res/logo.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body class="page-quiz">
+
+  <!-- ================= NAVBAR ================= -->
+  <header class="navbar">
+    <a href="index.html" class="navbar__logo">
+      <img class="navbar__logo-img" src="res/logo.png" alt="Akiba Zone Logo">
+      <div class="navbar__logo-text">
+        <span class="navbar__logo-title">AKIBA<span>ZONE</span></span>
+        <span class="navbar__logo-sub">アキバゾーン · Bilbao</span>
+      </div>
+    </a>
+
+    <!-- Centered navigation buttons -->
+    <nav class="navbar__nav">
+      <a href="index.html">Inicio</a>
+      <a href="juegos.html" class="is-active">Juegos</a>
+      <a href="encuentranos.html">Encuéntranos</a>
+    </nav>
+
+    <div class="navbar__status">
+      <div class="navbar__badge">
+        <span class="navbar__badge-dot"></span>
+        <span>ABIERTOS· BILBAO</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="game">
+    <div class="game__inner">
+
+      <div class="quiz-terminal">
+
+        <!-- TERMINAL HUD HEADER -->
+        <div class="quiz-header">
+          <div class="quiz-badge-title">
+            <span>[SYS_ONLINE]</span> AKIBA_ZONE // ADIVINA_EL_ANIME
+          </div>
+          <div class="quiz-hud-meta">
+            <span class="quiz-hud-counter" id="counter">Fotograma 01 / 10</span>
+            <span class="quiz-hud-score" id="score">Aciertos: 0</span>
+          </div>
+        </div>
+
+        <!-- PROGRESS BAR -->
+        <div class="quiz-progress-bar">
+          <div class="quiz-progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- ESCENARIO DE JUEGO (ACTIVO) -->
+        <section id="stage">
+
+          <div class="quiz-question-card quiz-question-card--frame">
+            <p class="quiz-question-num" id="frameBadge">// FOTOGRAMA 01</p>
+            <div class="quiz-frame">
+              <img id="frameImg" src="" alt="Fotograma del anime a adivinar">
+            </div>
+            <h1 class="quiz-question-title">¿De qué anime es este fotograma?</h1>
+          </div>
+
+          <!-- OPCIONES -->
+          <div class="quiz-answers-grid" id="answers"></div>
+
+          <p class="quiz-feedback" id="feedback"></p>
+        </section>
+
+        <!-- RESULTADO FINAL -->
+        <section class="quiz-result" id="result" hidden>
+          <p class="quiz-result__rank-tag" id="rankBadge">Calculando...</p>
+          <div class="quiz-result__score-wrap">
+            <p class="quiz-result__score" id="finalScore">0</p>
+            <p class="quiz-result__of" id="finalOf">de 10 aciertos</p>
+          </div>
+          <h2 class="quiz-result__title" id="finalTitle">Calculando...</h2>
+          <p class="quiz-result__msg" id="finalMsg">Calculando...</p>
+
+          <div class="quiz-result__actions">
+            <button class="btn btn--primary" id="replayBtn">Jugar otra vez</button>
+            <a class="btn btn--ghost" href="juegos.html">Volver a juegos</a>
+          </div>
+        </section>
+
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    /* ============================================================
+       BANCO DE FOTOGRAMAS (FRAME POOL)
+       ============================================================ */
+    const FRAME_POOL = [
+      /* 01 - Cyberpunk: Edgerunners */
+      {
+        image: "res/frames/cyberpunkedgerunners.jpg",
+        answers: [
+          { text: "Cyberpunk: Edgerunners", correct: true },
+          { text: "Akudama Drive", correct: false },
+          { text: "Psycho-Pass", correct: false },
+          { text: "Ghost in the Shell", correct: false }
+        ]
+      },
+      /* 02 - Dandadan */
+      {
+        image: "res/frames/dandadan.jpg",
+        answers: [
+          { text: "Dandadan", correct: true },
+          { text: "Mob Psycho 100", correct: false },
+          { text: "Chainsaw Man", correct: false },
+          { text: "Jujutsu Kaisen", correct: false }
+        ]
+      },
+      /* 03 - Demon Slayer */
+      {
+        image: "res/frames/demonslayer.jpg",
+        answers: [
+          { text: "Kimetsu no Yaiba", correct: true },
+          { text: "Jujutsu Kaisen", correct: false },
+          { text: "Chainsaw Man", correct: false },
+          { text: "Fire Force", correct: false }
+        ]
+      },
+      /* 04 - Dragon Ball */
+      {
+        image: "res/frames/dragonball.jpg",
+        answers: [
+          { text: "Dragon Ball", correct: true },
+          { text: "Naruto", correct: false },
+          { text: "One Piece", correct: false },
+          { text: "Yu-Gi-Oh!", correct: false }
+        ]
+      },
+      /* 05 - Dr. Stone */
+      {
+        image: "res/frames/drstone.jpg",
+        answers: [
+          { text: "Dr. Stone", correct: true },
+          { text: "Steins;Gate", correct: false },
+          { text: "Cells at Work!", correct: false },
+          { text: "Made in Abyss", correct: false }
+        ]
+      },
+      /* 06 - Elfen Lied */
+      {
+        image: "res/frames/elfenlied.jpg",
+        answers: [
+          { text: "Elfen Lied", correct: true },
+          { text: "Tokyo Ghoul", correct: false },
+          { text: "Monster", correct: false },
+          { text: "Parasyte", correct: false }
+        ]
+      },
+      /* 07 - Fire Force */
+      {
+        image: "res/frames/fireforce.jpg",
+        answers: [
+          { text: "Fire Force", correct: true },
+          { text: "Kimetsu no Yaiba", correct: false },
+          { text: "Jujutsu Kaisen", correct: false },
+          { text: "Blue Exorcist", correct: false }
+        ]
+      },
+      /* 08 - Fullmetal Alchemist Brotherhood */
+      {
+        image: "res/frames/fmab.jpg",
+        answers: [
+          { text: "Fullmetal Alchemist: Brotherhood", correct: true },
+          { text: "Hunter x Hunter", correct: false },
+          { text: "Monster", correct: false },
+          { text: "Berserk", correct: false }
+        ]
+      },
+      /* 09 - Frieren */
+      {
+        image: "res/frames/frieren.jpg",
+        answers: [
+          { text: "Frieren: Beyond Journey's End", correct: true },
+          { text: "Mushoku Tensei", correct: false },
+          { text: "Re:Zero", correct: false },
+          { text: "Konosuba", correct: false }
+        ]
+      },
+      /* 10 - Haikyuu!! */
+      {
+        image: "res/frames/haikyuu.jpg",
+        answers: [
+          { text: "Haikyuu!!", correct: true },
+          { text: "Kuroko no Basket", correct: false },
+          { text: "Yuri!!! on Ice", correct: false },
+          { text: "Free!", correct: false }
+        ]
+      },
+      /* 11 - Horimiya */
+      {
+        image: "res/frames/horimiya.jpg",
+        answers: [
+          { text: "Horimiya", correct: true },
+          { text: "Toradora!", correct: false },
+          { text: "Kaguya-sama: Love is War", correct: false },
+          { text: "My Dress-Up Darling", correct: false }
+        ]
+      },
+      /* 12 - Hunter x Hunter */
+      {
+        image: "res/frames/hunterxhunter.jpg",
+        answers: [
+          { text: "Hunter x Hunter", correct: true },
+          { text: "Fullmetal Alchemist", correct: false },
+          { text: "Naruto", correct: false },
+          { text: "Yu Yu Hakusho", correct: false }
+        ]
+      },
+      /* 13 - JoJo's Bizarre Adventure: Golden Wind */
+      {
+        image: "res/frames/jojosgoldenwind.jpg",
+        answers: [
+          { text: "JoJo's Bizarre Adventure: Golden Wind", correct: true },
+          { text: "Dragon Ball", correct: false },
+          { text: "Fist of the North Star", correct: false },
+          { text: "Bleach", correct: false }
+        ]
+      },
+      /* 14 - Mob Psycho 100 */
+      {
+        image: "res/frames/mobpsycho.jpg",
+        answers: [
+          { text: "Mob Psycho 100", correct: true },
+          { text: "One Punch Man", correct: false },
+          { text: "Dandadan", correct: false },
+          { text: "The Disastrous Life of Saiki K.", correct: false }
+        ]
+      },
+      /* 15 - Monster */
+      {
+        image: "res/frames/monster.jpg",
+        answers: [
+          { text: "Monster", correct: true },
+          { text: "Death Note", correct: false },
+          { text: "Steins;Gate", correct: false },
+          { text: "Psycho-Pass", correct: false }
+        ]
+      },
+      /* 16 - My Hero Academia */
+      {
+        image: "res/frames/myheroacademia.jpg",
+        answers: [
+          { text: "My Hero Academia", correct: true },
+          { text: "One Punch Man", correct: false },
+          { text: "Tiger & Bunny", correct: false },
+          { text: "Naruto", correct: false }
+        ]
+      },
+      /* 17 - Naruto */
+      {
+        image: "res/frames/naruto.jpg",
+        answers: [
+          { text: "Naruto", correct: true },
+          { text: "Dragon Ball", correct: false },
+          { text: "One Piece", correct: false },
+          { text: "Bleach", correct: false }
+        ]
+      },
+      /* 18 - One Piece */
+      {
+        image: "res/frames/onepiece.jpg",
+        answers: [
+          { text: "One Piece", correct: true },
+          { text: "Naruto", correct: false },
+          { text: "Dragon Ball", correct: false },
+          { text: "Fairy Tail", correct: false }
+        ]
+      },
+      /* 19 - Ranma 1/2 */
+      {
+        image: "res/frames/ranma.jpg",
+        answers: [
+          { text: "Ranma ½", correct: true },
+          { text: "Inuyasha", correct: false },
+          { text: "Urusei Yatsura", correct: false },
+          { text: "Maison Ikkoku", correct: false }
+        ]
+      },
+      /* 20 - Sword Art Online */
+      {
+        image: "res/frames/sao.jpg",
+        answers: [
+          { text: "Sword Art Online", correct: true },
+          { text: "Log Horizon", correct: false },
+          { text: "Overlord", correct: false },
+          { text: ".hack//Sign", correct: false }
+        ]
+      },
+      /* 21 - Solo Leveling */
+      {
+        image: "res/frames/sololeveling.jpg",
+        answers: [
+          { text: "Solo Leveling", correct: true },
+          { text: "Tower of God", correct: false },
+          { text: "The God of High School", correct: false },
+          { text: "Sword Art Online", correct: false }
+        ]
+      },
+      /* 22 - Spy x Family */
+      {
+        image: "res/frames/spyxfamily.jpg",
+        answers: [
+          { text: "Spy x Family", correct: true },
+          { text: "Horimiya", correct: false },
+          { text: "Kaguya-sama: Love is War", correct: false },
+          { text: "Hinamatsuri", correct: false }
+        ]
+      },
+      /* 23 - Steins;Gate */
+      {
+        image: "res/frames/steinsgate.jpg",
+        answers: [
+          { text: "Steins;Gate", correct: true },
+          { text: "Re:Zero", correct: false },
+          { text: "Erased", correct: false },
+          { text: "Charlotte", correct: false }
+        ]
+      },
+      /* 24 - Tokyo Ghoul */
+      {
+        image: "res/frames/tokyoghoul.jpg",
+        answers: [
+          { text: "Tokyo Ghoul", correct: true },
+          { text: "Parasyte", correct: false },
+          { text: "Ajin: Demi-Human", correct: false },
+          { text: "Elfen Lied", correct: false }
+        ]
+      },
+      /* 25 - Vinland Saga */
+      {
+        image: "res/frames/vinland.jpg",
+        answers: [
+          { text: "Vinland Saga", correct: true },
+          { text: "Berserk", correct: false },
+          { text: "Claymore", correct: false },
+          { text: "Attack on Titan", correct: false }
+        ]
+      },
+      /* 26 - Yu-Gi-Oh! */
+      {
+        image: "res/frames/yugioh.jpg",
+        answers: [
+          { text: "Yu-Gi-Oh!", correct: true },
+          { text: "Dragon Ball", correct: false },
+          { text: "Beyblade", correct: false },
+          { text: "Pokémon", correct: false }
+        ]
+      },
+      /* 27 - Yuri!!! on Ice */
+      {
+        image: "res/frames/yurionice.jpg",
+        answers: [
+          { text: "Yuri!!! on Ice", correct: true },
+          { text: "Haikyuu!!", correct: false },
+          { text: "Free!", correct: false },
+          { text: "Kuroko no Basket", correct: false }
+        ]
+      }
+    ];
+
+    /* ============================================================
+       CONFIGURACIÓN DEL JUEGO
+       ============================================================ */
+    const FRAMES_PER_GAME = 10;
+    const LABELS = ['01', '02', '03', '04'];
+
+    let sessionFrames = [];
+    let currentIndex = 0;
+    let score = 0;
+    let isLocked = false;
+
+    /* Referencias del DOM */
+    const dom = {
+      counter: document.getElementById('counter'),
+      score: document.getElementById('score'),
+      progressFill: document.getElementById('progressFill'),
+      stage: document.getElementById('stage'),
+      frameBadge: document.getElementById('frameBadge'),
+      frameImg: document.getElementById('frameImg'),
+      answers: document.getElementById('answers'),
+      feedback: document.getElementById('feedback'),
+      result: document.getElementById('result'),
+      rankBadge: document.getElementById('rankBadge'),
+      finalScore: document.getElementById('finalScore'),
+      finalOf: document.getElementById('finalOf'),
+      finalTitle: document.getElementById('finalTitle'),
+      finalMsg: document.getElementById('finalMsg'),
+      replayBtn: document.getElementById('replayBtn')
+    };
+
+    /* Utilidad: Mezclar array (Fisher-Yates) */
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    /* Iniciar nueva sesión con 10 fotogramas aleatorios */
+    function startQuizSession() {
+      // Selecciona 10 fotogramas al azar del pool
+      const shuffledPool = shuffle(FRAME_POOL);
+      sessionFrames = shuffledPool.slice(0, Math.min(FRAMES_PER_GAME, shuffledPool.length));
+
+      currentIndex = 0;
+      score = 0;
+      isLocked = false;
+
+      dom.result.hidden = true;
+      dom.stage.hidden = false;
+      dom.progressFill.style.width = '0%';
+
+      renderRound();
+    }
+
+    /* Actualizar HUD */
+    function updateHud(answered = false) {
+      const total = sessionFrames.length;
+      const displayIndex = Math.min(currentIndex + 1, total);
+      const padIndex = String(displayIndex).padStart(2, '0');
+      dom.counter.textContent = `Fotograma ${padIndex} / ${total}`;
+      dom.score.textContent = `Aciertos: ${score}`;
+
+      const progress = ((currentIndex + (answered ? 1 : 0)) / total) * 100;
+      dom.progressFill.style.width = progress + '%';
+    }
+
+    /* Renderizar ronda actual */
+    function renderRound() {
+      isLocked = false;
+      const round = sessionFrames[currentIndex];
+
+      updateHud(false);
+
+      dom.frameBadge.textContent = `// FOTOGRAMA ${String(currentIndex + 1).padStart(2, '0')} · AKIBA ZONE`;
+      dom.frameImg.src = round.image;
+      dom.frameImg.alt = `Fotograma ${currentIndex + 1} del anime a adivinar`;
+
+      dom.feedback.textContent = '';
+      dom.feedback.className = 'quiz-feedback';
+
+      dom.answers.className = 'quiz-answers-grid';
+      dom.answers.innerHTML = '';
+
+      // Barajar las 4 opciones
+      const shuffledAnswers = shuffle(round.answers);
+
+      shuffledAnswers.forEach((ans, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-opt';
+        btn.innerHTML = `
+          <span class="quiz-opt__badge">${LABELS[idx] || (idx + 1)}</span>
+          <span class="quiz-opt__text">${escapeHtml(ans.text)}</span>
+        `;
+
+        btn.addEventListener('click', () => handleSelectAnswer(btn, ans, shuffledAnswers));
+        dom.answers.appendChild(btn);
+      });
+    }
+
+    /* Selección de respuesta */
+    function handleSelectAnswer(selectedBtn, answer, allAnswers) {
+      if (isLocked) return;
+      isLocked = true;
+
+      dom.answers.classList.add('is-locked');
+      const buttons = Array.from(dom.answers.children);
+
+      if (answer.correct) {
+        selectedBtn.classList.add('is-correct');
+        score++;
+        dom.feedback.textContent = '[RESPUESTA CORRECTA]';
+        dom.feedback.className = 'quiz-feedback ok';
+      } else {
+        selectedBtn.classList.add('is-wrong');
+        // Revelar la opción correcta en verde
+        buttons.forEach((b, i) => {
+          if (allAnswers[i].correct) {
+            b.classList.add('is-correct');
+          }
+        });
+        const rightAnswerText = allAnswers.find(a => a.correct).text;
+        dom.feedback.textContent = `[RESPUESTA INCORRECTA // Correcta: ${rightAnswerText}]`;
+        dom.feedback.className = 'quiz-feedback ko';
+      }
+
+      updateHud(true);
+
+      // Transición automática a la siguiente ronda
+      setTimeout(() => {
+        currentIndex++;
+        if (currentIndex >= sessionFrames.length) {
+          showFinalResult();
+        } else {
+          renderRound();
+        }
+      }, 1600);
+    }
+
+    /* Pantalla de resultados */
+    function showFinalResult() {
+      dom.progressFill.style.width = '100%';
+      dom.counter.textContent = 'COMPLETADO';
+      dom.score.textContent = `Aciertos: ${score}`;
+
+      dom.stage.hidden = true;
+      dom.result.hidden = false;
+
+      dom.finalScore.textContent = score;
+      dom.finalOf.textContent = `de ${sessionFrames.length} aciertos`;
+
+      const ratio = score / sessionFrames.length;
+      let rank, title, msg;
+
+      if (ratio === 1) {
+        rank = '// COMPLETADO · RANGO S';
+        title = '¡Eres un verdadero otaku!';
+        msg = 'Reconoces un fotograma hasta con los ojos cerrados. 10 de 10, ¡perfecto!';
+      } else if (ratio >= 0.8) {
+        rank = '// COMPLETADO · RANGO A';
+        title = '¡Muy buen ojo!';
+        msg = 'Tienes la retina entrenada. Poco se te escapa, ¡casi perfecto!';
+      } else if (ratio >= 0.6) {
+        rank = '// COMPLETADO · RANGO B';
+        title = '¡Buen trabajo!';
+        msg = 'Has acertado la mayoría. Alguno se te ha escapado, pero vas por buen camino.';
+      } else if (ratio >= 0.4) {
+        rank = '// COMPLETADO · RANGO C';
+        title = 'Toca maratón';
+        msg = 'Un fin de semana de anime y esto cambia por completo. ¡Sigue entrenando ese ojo!';
+      } else {
+        rank = '// COMPLETADO · RANGO D';
+        title = 'Cero absoluto';
+        msg = 'Pero oye, has jugado hasta el final. Eso ya es algo. ¡A ver más anime!';
+      }
+
+      dom.rankBadge.textContent = rank;
+      dom.finalTitle.textContent = title;
+      dom.finalMsg.textContent = msg;
+    }
+
+    /* Eventos */
+    dom.replayBtn.addEventListener('click', startQuizSession);
+
+    /* Arranque automático */
+    startQuizSession();
+  </script>
+</body>
+
+</html>
